@@ -1,4 +1,4 @@
-# A Star Wars NodeJS Exercice
+# A Star Wars NodeJS Exercice that ended up in python...
 This exercise is using the following Star Wars API: [https://swapi.dev/](https://swapi.dev/)
 
 ## Goal
@@ -38,3 +38,8 @@ $ node index.js 6
 > 24620
 ```
 
+Well, it ended being used like this:
+```bash
+$ python3 index.py 6
+> 24620
+```

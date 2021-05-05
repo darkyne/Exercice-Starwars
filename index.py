@@ -5,11 +5,15 @@ Author: Gregory Creupelandt
 
 import sys
 import requests
+import threading
+
+# Global variable for threads
+DIAMETERS = []
 
 ####################################################################
 ########################## BODY ####################################
 ####################################################################
-def homework():
+def main():
     # Get the film index
     good_args, film_index = check_input()
     if not good_args:
@@ -25,13 +29,13 @@ def homework():
     # Get the planets diameters
     planets_exist, planets_diameters = get_diameters(film_planets_urls)
     if not planets_exist:
-        print("It looks like some planets there do not exist...? Maybe they got destroyed !")
+        print("It looks like some planets there do not answer..? Maybe they got destroyed !")
         return
 
     # Summ the diameters
     good_diameters, diameters_summ = summ(planets_diameters)
     if not good_diameters:
-        print("One planet diameter is not an integer value... Strange planet !")
+        print("One planet diameter is not a correct integer value... Strange planet !")
         return
 
     # Print the final result
@@ -43,6 +47,8 @@ def homework():
 ####################################################################
 
 def check_input():
+    """ Verify the inputs, the command line should be "python3 index.py film_index" where film_index is an integer
+    First output is a boolean to tell if input is correctly formatted. Second output is the film_index integer"""
     if len(sys.argv) != 2:
         return False, 0
     try:
@@ -53,6 +59,8 @@ def check_input():
 
 
 def get_planets(film_index):
+    """ Based on the film index, it returns an array of planet_urls
+    First output is a boolean to tell if the request to swapi was fine. Second output is the planet_urls"""
     r = requests.get('https://swapi.dev/api/films/'+str(film_index)+'/')
     if r.status_code != 200:
         return False, "error"
@@ -62,29 +70,46 @@ def get_planets(film_index):
 
 
 def get_diameters(film_planets_urls):
-    diameters = []
-    for planet_url in film_planets_urls:
-        planet_exists, planet_diameter = get_planet_diameter(planet_url)
-        if not planet_exists:
-            return False, "error"
-        diameters.append(planet_diameter)
-    return True, diameters
+    """ Based on an array of planet_urls, it launches parallel requests then returns an array containing the planets diameters
+    First output is a boolean to tell if an exception occured. Second output is the diameters array"""
+    try:
+        threads = []
+        for planet_url in film_planets_urls:
+            thread = threading.Thread(target=get_planet_diameter, args=(planet_url, ))
+            thread.start()
+            threads.append(thread)
+        for th in threads:
+            th.join()
+        return True, DIAMETERS
+    except Exception:
+        return False, 0
 
 
 def get_planet_diameter(planet_url):
-    r = requests.get(planet_url)
-    if r.status_code != 200:
-        return False, "error"
-    content_dict = r.json()
-    diameter = content_dict["diameter"]
-    return True, diameter
+    """ Adds the diameter of """
+    try:
+        global DIAMETERS
+        r = requests.get(planet_url)
+        if r.status_code != 200:
+            return -1
+        content_dict = r.json()
+        diameter = content_dict["diameter"]
+        terrains = content_dict["terrain"]
+        surface_water = content_dict["surface_water"]
+        if surface_water != "unknown" and float(surface_water) > 0 and "mountains" in terrains:
+            DIAMETERS.append(diameter)
+    except Exception:
+        pass #This planet will not be taken in account for the final result
 
 
 def summ(array):
-    total=0
+    total = 0
     try:
         for diameter in array:
-            total += int(diameter)
+            diameter_int = int(diameter)
+            if diameter_int < 0:
+                return False, 0
+            total += diameter_int
         return True, total
     except Exception:
         return False, 0
@@ -94,4 +119,4 @@ def summ(array):
 ########################## Launch ##################################
 ####################################################################
 if __name__ == "__main__":
-    homework()
+    main()
