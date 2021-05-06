@@ -86,7 +86,7 @@ def get_diameters(film_planets_urls):
 
 
 def get_planet_diameter(planet_url):
-    """ Adds the diameter of """
+    """ Based on a plantet url, adds the diameter of the planet to the diameters array"""
     try:
         global DIAMETERS
         r = requests.get(planet_url)
@@ -103,6 +103,7 @@ def get_planet_diameter(planet_url):
 
 
 def summ(array):
+    """ Basedon an array of strings representing diameters, convert them to integers and compute their summ """
     total = 0
     try:
         for diameter in array:
